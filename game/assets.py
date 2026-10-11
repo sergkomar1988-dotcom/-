@@ -1,15 +1,29 @@
 """Загрузка арта. Если файла нет, рисуется временная процедурная графика,
 поэтому игра запускается и без картинок (см. tools/prepare_assets.py)."""
+import base64
+import io
 import os
 
 import pygame
 
 from config import ASSETS_DIR, W, H, HERO_H, GROUND_Y, LEVELS, BOSS_MAX_W
 
+try:  # арт, вшитый в одиночный файл (см. tools/build_single_file.py)
+    from _embedded_assets import ASSETS as _EMBEDDED
+except ImportError:
+    _EMBEDDED = {}
+
 _cache = {}
 
 
 def _load(name, alpha=True):
+    if name in _EMBEDDED:
+        try:
+            raw = io.BytesIO(base64.b64decode(_EMBEDDED[name]))
+            img = pygame.image.load(raw, name)
+            return img.convert_alpha() if alpha else img.convert()
+        except pygame.error:
+            return None
     path = os.path.join(ASSETS_DIR, name)
     if not os.path.exists(path):
         return None
