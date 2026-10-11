@@ -1,7 +1,13 @@
 """Настройки игры: экран, физика, уровни, навыки героя."""
 import os
+import sys
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+# В собранном exe файлы распаковываются во временную папку, поэтому данные
+# (save.json) пишутся рядом с самим exe.
+if getattr(sys, "frozen", False):
+    ROOT = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    ROOT = os.path.dirname(os.path.abspath(__file__))
 ASSETS_DIR = os.path.join(ROOT, "assets")
 # Путь к сохранению можно переопределить (используется тестами).
 SAVE_PATH = os.environ.get("RUST_RUNNER_SAVE", os.path.join(ROOT, "save.json"))

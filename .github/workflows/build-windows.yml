@@ -1,0 +1,54 @@
+name: Build Windows exe
+
+on:
+  push:
+    branches: [arena/84077dae-repo]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r game/requirements.txt pillow pyinstaller
+
+      - name: Run tests
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: python -m unittest discover -s game/tests -v
+
+      - name: Build single-file script
+        run: python tools/build_single_file.py
+
+      - name: Build exe
+        run: pyinstaller --onefile --windowed --name RustRush --collect-all pygame rust_rush.py
+
+      - name: Smoke test exe (must stay alive for 8 s)
+        shell: pwsh
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: |
+          $p = Start-Process -FilePath "dist\RustRush.exe" -PassThru
+          Start-Sleep -Seconds 8
+          if ($p.HasExited) { Write-Error "exe exited early with code $($p.ExitCode)"; exit 1 }
+          Stop-Process -Id $p.Id -Force
+          Write-Host "exe работает"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RustRush-windows
+          path: dist/RustRush.exe
+          if-no-files-found: error
