@@ -83,6 +83,8 @@ def build(assets_dir, out_path):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # консоль Windows может быть не в UTF-8
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--assets", default=os.path.join(GAME, "assets"))
     ap.add_argument("--out", default=os.path.join(ROOT, "rust_rush.py"))
